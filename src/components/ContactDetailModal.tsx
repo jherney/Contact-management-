@@ -18,7 +18,8 @@ import {
   MessageSquare,
   FileText,
   Tag,
-  UserCheck
+  UserCheck,
+  AlertCircle
 } from 'lucide-react';
 import { Contact, InteractionNote } from '../types';
 import { getInitials, formatRelativeTime } from '../utils/contactUtils';
@@ -52,6 +53,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
   const [logType, setLogType] = useState<InteractionNote['type']>('Call');
   const [logSummary, setLogSummary] = useState('');
   const [logDetails, setLogDetails] = useState('');
+  const [logError, setLogError] = useState<string | null>(null);
 
   const initials = getInitials(contact.firstName, contact.lastName);
 
@@ -63,19 +65,31 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
 
   const handleCreateInteraction = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!logSummary.trim()) return;
+    setLogError(null);
+
+    const trimmedSummary = logSummary.trim();
+    if (!trimmedSummary) {
+      setLogError('Summary is required.');
+      return;
+    }
+
+    if (trimmedSummary.length < 2) {
+      setLogError('Summary must be at least 2 characters long.');
+      return;
+    }
 
     const newNote: InteractionNote = {
       id: `int-${Date.now()}`,
       type: logType,
       date: new Date().toISOString(),
-      summary: logSummary.trim(),
+      summary: trimmedSummary,
       details: logDetails.trim() || undefined
     };
 
     onAddInteraction(contact.id, newNote);
     setLogSummary('');
     setLogDetails('');
+    setLogError(null);
     setShowAddLog(false);
   };
 
@@ -436,10 +450,22 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({
                     type="text"
                     placeholder="Summary (e.g., Scheduled Q4 intro call)..."
                     value={logSummary}
-                    onChange={(e) => setLogSummary(e.target.value)}
-                    required
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    onChange={(e) => {
+                      setLogSummary(e.target.value);
+                      if (logError) setLogError(null);
+                    }}
+                    className={`w-full bg-slate-900 border rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                      logError
+                        ? 'border-rose-500 focus:ring-rose-500/50 bg-rose-950/20'
+                        : 'border-slate-700 focus:ring-indigo-500'
+                    }`}
                   />
+                  {logError && (
+                    <p className="text-[11px] text-rose-400 mt-1 flex items-center gap-1 font-medium">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      <span>{logError}</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>

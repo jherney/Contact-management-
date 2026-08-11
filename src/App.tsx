@@ -230,14 +230,21 @@ export default function App() {
     showToast('Deleted interaction log');
   };
 
-  const handleImportContacts = (importedContacts: Contact[]) => {
+  const handleImportContacts = (importedContacts: Contact[], strategy: 'skip' | 'replace' | 'allow' = 'skip') => {
     setContacts((prev) => {
-      // Merge with de-duplication by email or id
+      if (strategy === 'replace') {
+        const importedMap = new Map(importedContacts.map(c => [c.id, c]));
+        const updatedPrev = prev.map(c => importedMap.get(c.id) || c);
+        const prevIds = new Set(prev.map(c => c.id));
+        const brandNew = importedContacts.filter(c => !prevIds.has(c.id));
+        return [...brandNew, ...updatedPrev];
+      }
+
       const existingIds = new Set(prev.map((c) => c.id));
       const newOnly = importedContacts.filter((c) => !existingIds.has(c.id));
       return [...newOnly, ...prev];
     });
-    showToast(`Imported ${importedContacts.length} contacts`);
+    showToast(`Processed ${importedContacts.length} contacts import`);
   };
 
   const handleResetFilters = () => {
@@ -432,6 +439,7 @@ export default function App() {
         }}
         onSave={handleSaveContact}
         initialContact={editingContact}
+        existingContacts={contacts}
       />
 
       <ImportExportModal
