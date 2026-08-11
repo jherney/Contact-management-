@@ -6,7 +6,8 @@ import {
   List,
   Download,
   UserCheck,
-  X
+  X,
+  Database
 } from 'lucide-react';
 import { ViewMode, FilterOptions } from '../types';
 
@@ -19,6 +20,7 @@ interface NavbarProps {
   favoritesCount: number;
   onOpenAddModal: () => void;
   onOpenImportExportModal: () => void;
+  onOpenVercelDbModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -29,7 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   totalContacts,
   favoritesCount,
   onOpenAddModal,
-  onOpenImportExportModal
+  onOpenImportExportModal,
+  onOpenVercelDbModal
 }) => {
   return (
     <header id="app-header" className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-slate-100 shadow-sm">
@@ -103,6 +106,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               <List className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Vercel Database Connection Status Button */}
+          {onOpenVercelDbModal && (
+            <button
+              id="vercel-db-modal-button"
+              onClick={onOpenVercelDbModal}
+              title="Postgres Database Settings & Status"
+              className="p-2 sm:px-3 sm:py-1.5 bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 shadow-sm hover:border-indigo-500/60"
+            >
+              <Database className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden lg:inline">Postgres DB</span>
+            </button>
+          )}
 
           {/* Import / Export Data */}
           <button

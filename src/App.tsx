@@ -15,6 +15,8 @@ import { ContactTableRow } from './components/ContactTableRow';
 import { ContactDetailModal } from './components/ContactDetailModal';
 import { ContactFormModal } from './components/ContactFormModal';
 import { ImportExportModal } from './components/ImportExportModal';
+import { VercelDatabaseModal } from './components/VercelDatabaseModal';
+import { saveContactsToDatabase, fetchRemoteContacts } from './services/vercelDatabase';
 import {
   Users,
   Plus,
@@ -45,14 +47,19 @@ export default function App() {
     return INITIAL_CONTACTS;
   });
 
-  // Save contacts to localStorage on state change
+  // Sync contacts to Vercel Database engine / Local Storage on change
   useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
-    } catch (e) {
-      console.error('Failed to save contacts to localStorage', e);
-    }
+    saveContactsToDatabase(contacts);
   }, [contacts]);
+
+  // Attempt initial remote fetch from Vercel Postgres/KV if available
+  useEffect(() => {
+    fetchRemoteContacts().then((remote) => {
+      if (remote && remote.length > 0) {
+        setContacts(remote);
+      }
+    });
+  }, []);
 
   // View Mode: 'grid' | 'table'
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -73,6 +80,7 @@ export default function App() {
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isImportExportModalOpen, setIsImportExportModalOpen] = useState(false);
+  const [isVercelDbModalOpen, setIsVercelDbModalOpen] = useState(false);
 
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -282,6 +290,7 @@ export default function App() {
         favoritesCount={favoritesCount}
         onOpenAddModal={handleOpenAddModal}
         onOpenImportExportModal={() => setIsImportExportModalOpen(true)}
+        onOpenVercelDbModal={() => setIsVercelDbModalOpen(true)}
       />
 
       {/* Main Content Layout */}
@@ -447,6 +456,14 @@ export default function App() {
         onClose={() => setIsImportExportModalOpen(false)}
         contacts={contacts}
         onImportContacts={handleImportContacts}
+      />
+
+      <VercelDatabaseModal
+        isOpen={isVercelDbModalOpen}
+        onClose={() => setIsVercelDbModalOpen(false)}
+        contacts={contacts}
+        onContactsUpdated={setContacts}
+        showToast={showToast}
       />
     </div>
   );
