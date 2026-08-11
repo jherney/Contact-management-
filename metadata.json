@@ -1,6 +1,5 @@
 {
   "name": "Contact Management System",
   "description": "Organize, filter, search, and track interactions with your personal and professional contacts.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "requestFramePermissions": []
 }
