@@ -433,11 +433,20 @@ export default function App() {
           </motion.section>
         )}
 
-        {/* Directory View (with sidebar) */}
-{activeView === 'directory' && (
+{/* Directory View (with sidebar) */}
+        {activeView === 'directory' && (
           <>
-            {/* Directory Results View */}
-            <section id="directory-content" className="w-full space-y-5">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 w-full">
+              {/* Sidebar - Filters */}
+              <Sidebar
+                contacts={contacts}
+                filters={filters}
+                setFilters={setFilters}
+                allTags={allTags}
+              />
+
+              {/* Directory Results View */}
+              <section id="directory-content" className="flex-1 min-w-0 space-y-5">
               {/* Section Header with result count */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -619,8 +628,9 @@ export default function App() {
                 </div>
               </motion.div>
             )}
-           </AnimatePresence>
-         </section>
+</AnimatePresence>
+            </section>
+          </div>
           </>
         )}
       </main>
