@@ -1,22 +1,23 @@
 # Contact Management System
 
-A full-stack contact management application built with React, Vite, and Express. Organize, filter, search, and track interactions with your personal and professional contacts. Features optional cloud persistence via Vercel Postgres or Vercel KV, with a localStorage fallback for offline use.
+A full-stack contact management application built with React, Vite, and Express. Organize, filter, search, and track interactions with your personal and professional contacts. Features session-based authentication with per-user data isolation, optional cloud persistence via Vercel Postgres or Vercel KV, and a localStorage fallback for offline use.
 
 ## Features
 
-- **Contact CRUD**: Create, read, update, delete contacts with rich details
+- **Authentication & Multi-User Support**: Session-based auth with secure HTTP-only cookies and per-user contact isolation
+- **Contact CRUD**: Create, read, update, delete contacts with rich details (scoped to authenticated user)
 - **Favorites & Tagging**: Star important contacts and organize with tags
 - **Interaction Logging**: Track calls, emails, meetings, and notes with timestamps
 - **Multiple Views**: Switch between grid (visual cards) and table (detailed list) views
 - **Powerful Filtering**: Search by name, filter by category, tag, favorites, recent activity
-- **Import/Export**: Backup and restore your contacts as JSON with flexible merge strategies
+- **Import/Export**: Backup and restore your contacts as JSON or CSV with flexible merge strategies
 - **Responsive Design**: Works on desktop and mobile devices
-- **Persistent Storage**: 
+- **Persistent Storage**:
   - Optional Vercel Postgres (PostgreSQL) for relational storage
-  - Optional Vercel KV (Redis) for key-value storage
+  - Optional Vercel KV (Redis) for session and key-value storage
   - Automatic localStorage fallback when cloud services aren't configured
-- **Real-time Sync**: Changes automatically sync to configured cloud database
-- **Status Monitoring**: Check database connection status and provider information
+- **CSRF Protection**: Built-in CSRF token validation for all state-changing requests
+- **Data Migration**: Automatic migration of existing local contacts to your user account on first login
 
 ## Tech Stack
 
@@ -25,18 +26,21 @@ A full-stack contact management application built with React, Vite, and Express.
 - Vite 6 for fast development and building
 - Tailwind CSS 4 for styling
 - Lucide React for icons
-- Framer Motion for animations
-- React Hooks for state management
+- React Context for auth state management
 
 ### Backend
 - Node.js with Express
 - TypeScript for type safety
+- bcrypt for password hashing
+- cookie-parser for session cookie management
+- csurf for CSRF protection
 - Vercel Postgres SDK for PostgreSQL integration
-- Vercel KV SDK for Redis integration
+- Vercel KV SDK for Redis/session integration
 - Vite middleware for serving frontend in development
 
 ### Data Persistence
-- Primary: Vercel Postgres (table: `vercel_contacts`)
+- Users table in Postgres for authentication
+- Single `vercel_contacts` table with `user_id` for per-user data isolation
 - Alternative: Vercel KV (key: `contacts_list`)
 - Fallback: Browser localStorage + server memory
 
@@ -54,16 +58,23 @@ contact-management/
 │   ├── components/          # Reusable UI components
 │   │   ├── ContactCard.tsx  # Grid view contact card
 │   │   ├── ContactTableRow.tsx # Table view contact row
+│   │   ├── AuthModal.tsx    # Login/Register modal
 │   │   ├── modals/          # Contact detail, form, import/export, DB status modals
 │   │   └── layout/          # Navbar, Sidebar
+│   ├── contexts/            # React contexts
+│   │   └── AuthContext.tsx  # Authentication state management
 │   ├── services/            # Backend service wrappers
-│   │   └── vercelDatabase.ts # API calls for contact sync and DB status
+│   │   ├── vercelDatabase.ts # API calls for contact sync and DB status
+│   │   ├── authApi.ts       # Frontend auth API calls
+│   │   └── sessionStore.ts  # Server-side session store (KV)
 │   ├── utils/               # Helper functions
 │   │   ├── contactUtils.ts  # Filtering and sorting logic
 │   │   └── validation.ts    # Input validation
 │   ├── types.ts             # TypeScript interfaces
-│   ├── data/                # Initial sample data
-│   │   └── initialContacts.ts
+│   ├── data/                # Initial sample data and migrations
+│   │   ├── initialContacts.ts
+│   │   └── migrations/
+│   │       └── 001_add_users_and_user_id.sql
 │   ├── App.tsx              # Main application component
 │   └── main.tsx             # React entry point
 ├── server.ts                # Express backend with Vite middleware
@@ -71,7 +82,7 @@ contact-management/
 ├── .env.example             # Environment variables template
 ├── package.json             # Dependencies and scripts
 ├── tsconfig.json            # TypeScript configuration
-�└── vite.config.ts           # Vite configuration with Tailwind plugin
+└── vite.config.ts           # Vite configuration with Tailwind plugin
 ```
 
 ## Setup & Installation
@@ -80,6 +91,7 @@ contact-management/
 - Node.js (v18+ recommended)
 - npm, yarn, or pnpm
 - Git
+- Vercel Postgres database (for auth and multi-user support)
 
 ### Local Development
 
@@ -94,11 +106,27 @@ contact-management/
    npm install
    ```
 
-3. **Configure environment (optional)**
-   Copy `.env.example` to `.env` and fill in your Vercel Postgres or Vercel KV credentials if you want cloud persistence.
-   For local-only usage, no configuration is needed.
+3. **Configure environment**
+   Copy `.env.example` to `.env` and fill in your Vercel Postgres and KV credentials.
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Required for authentication:
+   - `POSTGRES_URL` — your Vercel Postgres connection string
+   - `SESSION_SECRET` — a random secret string for signing session cookies
 
-4. **Start the development server**
+   Optional:
+   - `KV_REST_API_URL`, `KV_REST_API_TOKEN` — for Vercel KV (sessions and caching)
+
+4. **Run database migration**
+   Execute the SQL migration against your Postgres database:
+   ```bash
+   psql $POSTGRES_URL -f src/data/migrations/001_add_users_and_user_id.sql
+   ```
+   Or run the SQL manually in the Vercel Postgres dashboard.
+
+5. **Start the development server**
    ```bash
    npm run dev
    ```
@@ -123,41 +151,50 @@ contact-management/
 Create a `.env` file in the root directory based on `.env.example`:
 
 ```env
-# APP_URL: The URL where this app is hosted (used for self-referential links)
 APP_URL="http://localhost:3000"
 
-# VERCEL POSTGRES DATABASE CONFIGURATION (Option A)
-# Get these from your Vercel Postgres integration
+# Required for authentication
+SESSION_SECRET="generate-a-random-secret-string-here"
 POSTGRES_URL="your_postgres_connection_string"
-POSTGRES_PRISMA_URL="optional_prisma_url"
-POSTGRES_URL_NON_POOLING="optional_direct_connection"
-POSTGRES_USER="your_username"
-POSTGRES_HOST="your_host"
-POSTGRES_PASSWORD="your_password"
-POSTGRES_DATABASE="your_database_name"
 
-# VERCEL KV (REDIS) DATABASE CONFIGURATION (Option B)
-# Get these from your Vercel KV integration
-KV_URL="your_kv_url"
+# Optional: Vercel KV for sessions and caching
 KV_REST_API_URL="your_kv_rest_api_url"
 KV_REST_API_TOKEN="your_kv_rest_api_token"
-KV_REST_API_READ_ONLY_TOKEN="optional_read_only_token"
 ```
 
-**Note**: You only need to configure either Postgres OR KV (or neither for localStorage-only mode). The application automatically detects which services are configured.
+## Authentication & Multi-User Architecture
 
-## API Endpoints
+### How It Works
+- **Session-Based Auth**: Users register/login with email and password. Passwords are hashed with bcrypt (12 rounds).
+- **HTTP-Only Cookies**: Session IDs are stored in secure, HTTP-only cookies (7-day TTL).
+- **Per-User Data Isolation**: All contact data includes a `user_id` field. API endpoints filter contacts by the authenticated user's ID.
+- **CSRF Protection**: All state-changing requests require a valid CSRF token.
+- **Data Migration**: On first login after enabling auth, existing local contacts are automatically migrated to your account.
+
+### API Endpoints
 
 The Express backend provides these API endpoints:
 
 - `GET /api/database/status` - Check database connection status and active provider
-- `GET /api/contacts` - Fetch all contacts (from Postgres, KV, or memory fallback)
-- `POST /api/contacts` - Save/sync all contacts to the configured database
+- `GET /api/auth/csrf` - Get CSRF token for form submissions
+- `POST /api/auth/register` - Create a new user account
+- `POST /api/auth/login` - Log in and create session
+- `POST /api/auth/logout` - Log out and destroy session
+- `GET /api/auth/me` - Get current authenticated user
+- `GET /api/contacts` - Fetch all contacts for authenticated user
+- `POST /api/contacts` - Save/sync contacts for authenticated user
+- `DELETE /api/contacts/:id` - Delete a single contact
+- `GET /api/contacts/count` - Get contact count for authenticated user
 
 ## Usage
 
+### Authentication
+- **Register**: Click "Sign In" in the navbar, then switch to "Create Account"
+- **Login**: Click "Sign In" and enter your credentials
+- **Logout**: Click your name in the navbar, then "Logout"
+
 ### Managing Contacts
-- **Add Contact**: Click the "+" button in the navbar or mobile FAB
+- **Add Contact**: Click the "+" button in the navbar or mobile FAB (requires login)
 - **Edit Contact**: Click on a contact card/row, then click the edit button in the detail modal
 - **Delete Contact**: Click the delete button in the contact card/row or detail modal
 - **Toggle Favorite**: Click the star icon on a contact card/row or in the detail modal
@@ -170,7 +207,7 @@ The Express backend provides these API endpoints:
 
 ### Import/Export
 - **Export**: Click the "Import/Export" button in the navbar, then "Export Contacts"
-- **Import**: Click the "Import/Export" button, select a JSON file, choose a merge strategy (skip/replace/allow), and confirm
+- **Import**: Click the "Import/Export" button, select a JSON or CSV file, choose a merge strategy (skip/replace/allow), and confirm
 
 ### Database Status
 - Click the database icon in the navbar to view connection status and provider information
@@ -182,7 +219,8 @@ The Express backend provides these API endpoints:
 1. Push your code to a GitHub repository
 2. Import the project in Vercel
 3. Add your environment variables (Postgres/KV credentials) in Vercel Settings
-4. Vercel will automatically detect the Node.js project and build/deploy it
+4. Run the database migration in the Vercel Postgres dashboard
+5. Vercel will automatically detect the Node.js project and build/deploy it
 
 ### Docker
 ```bash
@@ -215,9 +253,8 @@ This project is open source and available under the [MIT License](LICENSE).
 - [Vercel](https://vercel.com) for providing Postgres and KV integrations
 - [Tailwind CSS](https://tailwindcss.com) for the utility-first CSS framework
 - [Lucide](https://lucide.dev) for the beautiful open-source icons
-- [Framer Motion](https://www.framer.com/motion/) for animations
 - The open-source React and Vite communities
 
---- 
+---
 
-*Built with �� ❤��️ for organized networking*
+*Built with ❤️ for organized networking*

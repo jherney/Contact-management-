@@ -3,6 +3,7 @@ import { Contact } from '../types';
 export const INITIAL_CONTACTS: Contact[] = [
   {
     id: 'contact-1',
+    userId: 'local-user',
     firstName: 'Sarah',
     lastName: 'Chen',
     email: 'sarah.chen@techsphere.io',
@@ -44,6 +45,7 @@ export const INITIAL_CONTACTS: Contact[] = [
   },
   {
     id: 'contact-2',
+    userId: 'local-user',
     firstName: 'Marcus',
     lastName: 'Vance',
     email: 'marcus.v@vancelegal.com',
@@ -76,6 +78,7 @@ export const INITIAL_CONTACTS: Contact[] = [
   },
   {
     id: 'contact-3',
+    userId: 'local-user',
     firstName: 'Elena',
     lastName: 'Rostova',
     email: 'elena.rostova@designlab.co',
@@ -104,6 +107,7 @@ export const INITIAL_CONTACTS: Contact[] = [
   },
   {
     id: 'contact-4',
+    userId: 'local-user',
     firstName: 'David',
     lastName: 'Kim',
     email: 'david.kim@familynet.org',
@@ -130,6 +134,7 @@ export const INITIAL_CONTACTS: Contact[] = [
   },
   {
     id: 'contact-5',
+    userId: 'local-user',
     firstName: 'Amara',
     lastName: 'Okonkwo',
     email: 'amara.o@globalventures.com',
@@ -159,6 +164,7 @@ export const INITIAL_CONTACTS: Contact[] = [
   },
   {
     id: 'contact-6',
+    userId: 'local-user',
     firstName: 'Julian',
     lastName: 'Moreno',
     email: 'j.moreno@apexlogistics.com',
@@ -186,6 +192,7 @@ export const INITIAL_CONTACTS: Contact[] = [
   },
   {
     id: 'contact-7',
+    userId: 'local-user',
     firstName: 'Chloe',
     lastName: 'Bennett',
     email: 'chloe.b@creativeminds.org',

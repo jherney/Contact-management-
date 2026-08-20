@@ -16,6 +16,7 @@ export interface CustomField {
 
 export interface Contact {
   id: string;
+  userId: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -53,3 +54,102 @@ export interface FilterOptions {
   sortBy: SortField;
   sortOrder: SortOrder;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface Session {
+  id: string;
+  userId: string;
+  email: string;
+  name: string;
+  createdAt: string;
+  userAgent?: string;
+}
+
+export type TaskStatus = 'pending' | 'in_progress' | 'completed';
+export type TaskPriority = 'low' | 'medium' | 'high';
+
+export interface Task {
+  id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  completedAt?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  contactId?: string;
+  dealId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type DealStage = 'lead' | 'qualified' | 'proposal' | 'negotiation' | 'won' | 'lost';
+
+export interface Deal {
+  id: string;
+  userId: string;
+  title: string;
+  value: number;
+  stage: DealStage;
+  probability: number;
+  expectedCloseDate?: string;
+  notes?: string;
+  contactId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Company {
+  id: string;
+  userId: string;
+  name: string;
+  industry?: string;
+  size?: string;
+  website?: string;
+  address?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ReminderType = 'follow_up' | 'birthday' | 'anniversary' | 'custom';
+export type ReminderStatus = 'active' | 'completed' | 'snoozed';
+
+export interface Reminder {
+  id: string;
+  userId: string;
+  contactId?: string;
+  dealId?: string;
+  type: ReminderType;
+  title: string;
+  message: string;
+  remindAt: string;
+  recurrence?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+  status: ReminderStatus;
+  createdAt: string;
+  updatedAt: string;
+  snoozedUntil?: string;
+}
+
+export type LeadScoreTier = 'cold' | 'warm' | 'hot' | 'vip';
+
+export interface LeadScore {
+  contactId: string;
+  score: number;
+  tier: LeadScoreTier;
+  lastCalculatedAt: string;
+}
+
+export type ActiveView =
+  | 'directory'
+  | 'tasks'
+  | 'deals'
+  | 'companies'
+  | 'reminders'
+  | 'reports';

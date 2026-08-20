@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: contact-management-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cm_user
+      POSTGRES_PASSWORD: cm_secret_pass
+      POSTGRES_DB: contact_mgmt
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cm_user -d contact_mgmt"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: contact-management-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - POSTGRES_URL=postgresql://cm_user:cm_secret_pass@postgres:5432/contact_mgmt
+      - KV_URL=
+      - KV_REST_API_URL=
+      - KV_REST_API_TOKEN=
+    healthcheck:
+      test: ["CMD", "node", "--input-type=module", "-e", "import('http').then(h => { const req = h.get('http://127.0.0.1:3000/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)); req.on('error', () => process.exit(1)) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  pg-data:

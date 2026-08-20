@@ -2,6 +2,8 @@ import React from 'react';
 import { Star, Mail, Phone, Edit3, Trash2, Building2, Clock } from 'lucide-react';
 import { Contact } from '../types';
 import { getInitials, formatRelativeTime } from '../utils/contactUtils';
+import { useAuth } from '../contexts/AuthContext';
+import { motion } from 'motion/react';
 
 interface ContactTableRowProps {
   contact: Contact;
@@ -18,92 +20,96 @@ export const ContactTableRow: React.FC<ContactTableRowProps> = ({
   onEdit,
   onDelete
 }) => {
+  const { isAuthenticated } = useAuth();
   const initials = getInitials(contact.firstName, contact.lastName);
 
   const getCategoryBadgeClass = (category: string) => {
     switch (category) {
       case 'Work':
-        return 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30';
+        return 'bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20';
       case 'Client':
-        return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+        return 'bg-[#10b981]/10 text-[#10b981] border-[#10b981]/20';
       case 'VIP':
-        return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+        return 'bg-[#ff4d00]/10 text-[#ff4d00] border-[#ff4d00]/20';
       case 'Family':
-        return 'bg-rose-500/15 text-rose-300 border-rose-500/30';
+        return 'bg-[#f43f5e]/10 text-[#f43f5e] border-[#f43f5e]/20';
       case 'Personal':
-        return 'bg-blue-500/15 text-blue-300 border-blue-500/30';
+        return 'bg-[#8b5cf6]/10 text-[#8b5cf6] border-[#8b5cf6]/20';
       default:
-        return 'bg-slate-700/50 text-slate-300 border-slate-600/50';
+        return 'bg-white/[0.06] text-[#fafaf9]/60 border-white/[0.08]';
     }
   };
 
   return (
-    <tr
+    <motion.tr
       id={`contact-row-${contact.id}`}
       onClick={() => onSelect(contact)}
-      className="group hover:bg-slate-800/60 border-b border-slate-800/80 transition-colors cursor-pointer text-xs"
+      className="group hover:bg-white/[0.02] border-b border-white/[0.06] transition-colors cursor-pointer text-xs"
+      whileHover={{ backgroundColor: 'rgba(255, 77, 0, 0.02)' }}
     >
       {/* Star */}
-      <td className="py-3 px-4 w-10 text-center" onClick={(e) => e.stopPropagation()}>
-        <button
+      <td className="py-4 px-5 w-12 text-center" onClick={(e) => e.stopPropagation()}>
+        <motion.button
           id={`favorite-row-btn-${contact.id}`}
           onClick={(e) => onToggleFavorite(contact.id, e)}
-          className="p-1 rounded hover:bg-slate-700/50 text-slate-500 hover:text-amber-400"
+          className="p-2 rounded-xl hover:bg-white/[0.06] text-[#fafaf9]/30 hover:text-[#ff4d00] transition-colors"
+          whileTap={{ scale: 0.9 }}
         >
           <Star
             className={`w-4 h-4 ${
-              contact.isFavorite ? 'fill-amber-400 text-amber-400' : 'text-slate-500'
+              contact.isFavorite ? 'fill-[#ff4d00] text-[#ff4d00]' : 'text-[#fafaf9]/30'
             }`}
           />
-        </button>
+        </motion.button>
       </td>
 
       {/* Name & Title */}
-      <td className="py-3 px-4">
-        <div className="flex items-center gap-3">
+      <td className="py-4 px-5 min-w-0 flex-1">
+        <div className="flex items-center gap-3.5">
           {contact.avatarUrl ? (
             <img
               src={contact.avatarUrl}
               alt={`${contact.firstName} ${contact.lastName}`}
-              className="w-9 h-9 rounded-lg object-cover ring-1 ring-slate-700 flex-shrink-0"
+              className="w-10 h-10 rounded-xl object-cover ring-1 ring-white/[0.08] flex-shrink-0"
               referrerPolicy="no-referrer"
             />
           ) : (
             <div
-              className={`w-9 h-9 rounded-lg ${
-                contact.avatarBgColor || 'bg-indigo-600'
-              } flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-inner`}
+              className={`w-10 h-10 rounded-xl ${
+                contact.avatarBgColor || 'bg-[#ff4d00]'
+              } flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-md`}
+              style={{ fontFamily: 'var(--font-display)' }}
             >
               {initials}
             </div>
           )}
-          <div>
-            <div className="font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors text-sm">
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold text-[#fafaf9] group-hover:text-[#ff4d00] transition-colors text-sm truncate" style={{ fontFamily: 'var(--font-display)' }}>
               {contact.firstName} {contact.lastName}
             </div>
             {contact.jobTitle && (
-              <div className="text-slate-400 text-[11px]">{contact.jobTitle}</div>
+              <div className="text-[#fafaf9]/50 text-[11px] mt-0.5 tracking-wide truncate">{contact.jobTitle}</div>
             )}
           </div>
         </div>
       </td>
 
       {/* Company */}
-      <td className="py-3 px-4 text-slate-300 hidden md:table-cell">
+      <td className="py-4 px-5 min-w-0 hidden md:table-cell">
         {contact.company ? (
-          <div className="flex items-center gap-1.5 truncate">
-            <Building2 className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
-            <span className="truncate">{contact.company}</span>
+          <div className="flex items-center gap-2">
+            <Building2 className="w-3.5 h-3.5 text-[#fafaf9]/20 flex-shrink-0" />
+            <span className="truncate" title={contact.company}>{contact.company}</span>
           </div>
         ) : (
-          <span className="text-slate-600">—</span>
+          <span className="text-[#fafaf9]/20">—</span>
         )}
       </td>
 
       {/* Category */}
-      <td className="py-3 px-4">
+      <td className="py-4 px-5 min-w-[110px]">
         <span
-          className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${getCategoryBadgeClass(
+          className={`text-[10px] font-bold px-2.5 py-1 rounded-full border whitespace-nowrap ${getCategoryBadgeClass(
             contact.category
           )}`}
         >
@@ -112,60 +118,66 @@ export const ContactTableRow: React.FC<ContactTableRowProps> = ({
       </td>
 
       {/* Contact Info */}
-      <td className="py-3 px-4 hidden lg:table-cell">
-        <div className="space-y-0.5">
+      <td className="py-4 px-5 min-w-0 hidden lg:table-cell">
+        <div className="space-y-1.5">
           {contact.email && (
             <a
               href={`mailto:${contact.email}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 text-slate-300 hover:text-indigo-400 truncate"
+              className="flex items-center gap-2 text-[#fafaf9]/60 hover:text-[#ff4d00] truncate transition-colors"
             >
-              <Mail className="w-3 h-3 text-slate-500" />
-              <span className="truncate max-w-[180px]">{contact.email}</span>
+              <Mail className="w-3 h-3 text-[#fafaf9]/20 flex-shrink-0" />
+              <span className="truncate max-w-[160px]" title={contact.email}>{contact.email}</span>
             </a>
           )}
           {contact.phone && (
             <a
               href={`tel:${contact.phone}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1.5 text-slate-400 hover:text-indigo-400 truncate"
+              className="flex items-center gap-2 text-[#fafaf9]/50 hover:text-[#ff4d00] truncate transition-colors"
             >
-              <Phone className="w-3 h-3 text-slate-500" />
-              <span className="truncate">{contact.phone}</span>
+              <Phone className="w-3 h-3 text-[#fafaf9]/20 flex-shrink-0" />
+              <span className="truncate max-w-[160px]" title={contact.phone}>{contact.phone}</span>
             </a>
           )}
         </div>
       </td>
 
       {/* Last Contacted */}
-      <td className="py-3 px-4 text-slate-400 text-[11px] hidden xl:table-cell">
-        <div className="flex items-center gap-1">
-          <Clock className="w-3 h-3 text-slate-500" />
-          {formatRelativeTime(contact.lastContactedAt)}
+      <td className="py-4 px-5 text-[#fafaf9]/40 text-[11px] min-w-0 hidden xl:table-cell">
+        <div className="flex items-center gap-1.5">
+          <Clock className="w-3 h-3 text-[#fafaf9]/20 flex-shrink-0" />
+          <span className="truncate">{formatRelativeTime(contact.lastContactedAt)}</span>
         </div>
       </td>
 
       {/* Actions */}
-      <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+      <td className="py-4 px-5 text-right" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-end gap-1">
-          <button
-            id={`edit-row-btn-${contact.id}`}
-            onClick={(e) => onEdit(contact, e)}
-            title="Edit contact"
-            className="p-1.5 rounded-lg hover:bg-slate-700/80 text-slate-400 hover:text-white transition-colors"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            id={`delete-row-btn-${contact.id}`}
-            onClick={(e) => onDelete(contact.id, e)}
-            title="Delete contact"
-            className="p-1.5 rounded-lg hover:bg-rose-950/50 text-slate-400 hover:text-rose-400 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          {isAuthenticated && (
+            <>
+              <motion.button
+                id={`edit-row-btn-${contact.id}`}
+                onClick={(e) => onEdit(contact, e)}
+                title="Edit contact"
+                className="p-2 rounded-xl hover:bg-white/[0.06] text-[#fafaf9]/40 hover:text-[#fafaf9] transition-colors"
+                whileTap={{ scale: 0.9 }}
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </motion.button>
+              <motion.button
+                id={`delete-row-btn-${contact.id}`}
+                onClick={(e) => onDelete(contact.id, e)}
+                title="Delete contact"
+                className="p-2 rounded-xl hover:bg-rose-500/10 text-[#fafaf9]/40 hover:text-rose-400 transition-colors"
+                whileTap={{ scale: 0.9 }}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </motion.button>
+            </>
+          )}
         </div>
       </td>
-    </tr>
+    </motion.tr>
   );
 };

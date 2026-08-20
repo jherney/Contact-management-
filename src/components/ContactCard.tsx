@@ -1,18 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Star,
   Mail,
   Phone,
   Building2,
   Clock,
-  MoreVertical,
   ExternalLink,
   Edit3,
-  Trash2,
-  MessageSquare
+  Trash2
 } from 'lucide-react';
 import { Contact } from '../types';
 import { getInitials, formatRelativeTime } from '../utils/contactUtils';
+import { useAuth } from '../contexts/AuthContext';
+import { useCrm } from '../contexts/CrmContext';
+import { motion } from 'motion/react';
 
 interface ContactCardProps {
   contact: Contact;
@@ -29,124 +30,154 @@ export const ContactCard: React.FC<ContactCardProps> = ({
   onEdit,
   onDelete
 }) => {
+  const { isAuthenticated } = useAuth();
+  const { leadScores } = useCrm();
   const initials = getInitials(contact.firstName, contact.lastName);
+
+  const score = useMemo(() => leadScores.find((s) => s.contactId === contact.id), [leadScores, contact.id]);
+
+  const getScoreBadgeClass = (tier: string) => {
+    switch (tier) {
+      case 'vip': return 'bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/30';
+      case 'hot': return 'bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/30';
+      case 'warm': return 'bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/30';
+      case 'cold': return 'bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/30';
+      default: return 'bg-white/[0.06] text-[#fafaf9]/60 border-white/[0.08]';
+    }
+  };
 
   const getCategoryBadgeClass = (category: string) => {
     switch (category) {
       case 'Work':
-        return 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30';
+        return 'bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20';
       case 'Client':
-        return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+        return 'bg-[#10b981]/10 text-[#10b981] border-[#10b981]/20';
       case 'VIP':
-        return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+        return 'bg-[#ff4d00]/10 text-[#ff4d00] border-[#ff4d00]/20';
       case 'Family':
-        return 'bg-rose-500/15 text-rose-300 border-rose-500/30';
+        return 'bg-[#f43f5e]/10 text-[#f43f5e] border-[#f43f5e]/20';
       case 'Personal':
-        return 'bg-blue-500/15 text-blue-300 border-blue-500/30';
+        return 'bg-[#8b5cf6]/10 text-[#8b5cf6] border-[#8b5cf6]/20';
       default:
-        return 'bg-slate-700/50 text-slate-300 border-slate-600/50';
+        return 'bg-white/[0.06] text-[#fafaf9]/60 border-white/[0.08]';
     }
   };
 
   return (
-    <div
+    <motion.div
       id={`contact-card-${contact.id}`}
       onClick={() => onSelect(contact)}
-      className="group relative bg-slate-900 border border-slate-800 hover:border-indigo-500/50 rounded-2xl p-5 transition-all duration-200 hover:shadow-xl hover:shadow-indigo-950/20 hover:-translate-y-0.5 cursor-pointer flex flex-col justify-between"
+      className="group relative bg-[#141414] border border-white/[0.08] hover:border-[#ff4d00]/30 rounded-3xl p-6 transition-all duration-500 cursor-pointer flex flex-col justify-between card-interactive"
+      whileHover={{ y: -6 }}
     >
       {/* Top row: Category & Favorite */}
       <div>
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center justify-between gap-2 mb-4">
           <span
-            className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getCategoryBadgeClass(
+            className={`text-[10px] font-bold px-3 py-1 rounded-full border ${getCategoryBadgeClass(
               contact.category
             )}`}
           >
             {contact.category}
           </span>
 
-          <div className="flex items-center gap-1">
-            <button
+          <div className="flex items-center gap-0.5">
+            <motion.button
               id={`favorite-btn-${contact.id}`}
               onClick={(e) => onToggleFavorite(contact.id, e)}
               title={contact.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-              className="p-2 sm:p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-amber-400 transition-colors"
+              className="p-2 rounded-xl hover:bg-white/[0.06] text-[#fafaf9]/40 hover:text-[#ff4d00] transition-colors"
+              whileTap={{ scale: 0.9 }}
             >
               <Star
                 className={`w-4 h-4 ${
                   contact.isFavorite
-                    ? 'fill-amber-400 text-amber-400'
-                    : 'text-slate-500 group-hover:text-slate-400'
+                    ? 'fill-[#ff4d00] text-[#ff4d00]'
+                    : 'text-[#fafaf9]/30'
                 }`}
               />
-            </button>
+            </motion.button>
 
-            <button
-              id={`edit-card-btn-${contact.id}`}
-              onClick={(e) => onEdit(contact, e)}
-              title="Edit contact"
-              className="p-2 sm:p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-            >
-              <Edit3 className="w-3.5 h-3.5" />
-            </button>
+            {isAuthenticated && (
+              <>
+                <motion.button
+                  id={`edit-card-btn-${contact.id}`}
+                  onClick={(e) => onEdit(contact, e)}
+                  title="Edit contact"
+                  className="p-2 rounded-xl hover:bg-white/[0.06] text-[#fafaf9]/40 hover:text-[#fafaf9] transition-colors"
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                </motion.button>
 
-            <button
-              id={`delete-card-btn-${contact.id}`}
-              onClick={(e) => onDelete(contact.id, e)}
-              title="Delete contact"
-              className="p-2 sm:p-1.5 rounded-lg hover:bg-rose-950/50 text-slate-400 hover:text-rose-400 transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+                <motion.button
+                  id={`delete-card-btn-${contact.id}`}
+                  onClick={(e) => onDelete(contact.id, e)}
+                  title="Delete contact"
+                  className="p-2 rounded-xl hover:bg-rose-500/10 text-[#fafaf9]/40 hover:text-rose-400 transition-colors"
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </motion.button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Main Info: Avatar & Name */}
-        <div className="flex items-start gap-3 mb-4">
-          {contact.avatarUrl ? (
-            <img
-              src={contact.avatarUrl}
-              alt={`${contact.firstName} ${contact.lastName}`}
-              className="w-12 h-12 rounded-xl object-cover ring-2 ring-slate-700/60 flex-shrink-0"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div
-              className={`w-12 h-12 rounded-xl ${
-                contact.avatarBgColor || 'bg-indigo-600'
-              } flex items-center justify-center text-white font-bold text-base shadow-inner ring-1 ring-white/10 flex-shrink-0`}
-            >
-              {initials}
-            </div>
-          )}
+        {/* Main Info: Avatar & Name — Asymmetric layout */}
+        <div className="flex items-start gap-4 mb-5">
+          <div className="relative">
+            {contact.avatarUrl ? (
+              <img
+                src={contact.avatarUrl}
+                alt={`${contact.firstName} ${contact.lastName}`}
+                className="w-14 h-14 rounded-2xl object-cover ring-2 ring-white/[0.08] flex-shrink-0"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div
+                className={`w-14 h-14 rounded-2xl ${
+                  contact.avatarBgColor || 'bg-[#ff4d00]'
+                } flex items-center justify-center text-white font-bold text-lg shadow-lg ring-2 ring-white/[0.08] flex-shrink-0`}
+                style={{ fontFamily: 'var(--font-display)' }}
+              >
+                {initials}
+              </div>
+            )}
+            {contact.isFavorite && (
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#ff4d00] rounded-full flex items-center justify-center">
+                <Star className="w-2.5 h-2.5 fill-white text-white" />
+              </div>
+            )}
+          </div>
 
-          <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-slate-100 text-base leading-tight truncate group-hover:text-indigo-300 transition-colors">
+          <div className="min-w-0 flex-1 pt-1">
+            <h3 className="font-bold text-[#fafaf9] text-base leading-tight truncate group-hover:text-[#ff4d00] transition-colors" style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-lg)' }}>
               {contact.firstName} {contact.lastName}
             </h3>
             {contact.jobTitle && (
-              <p className="text-xs font-medium text-slate-300 truncate mt-0.5">
+              <p className="text-xs font-medium text-[#fafaf9]/60 truncate mt-1 tracking-wide">
                 {contact.jobTitle}
               </p>
             )}
             {contact.company && (
-              <p className="text-xs text-slate-400 truncate flex items-center gap-1 mt-0.5">
-                <Building2 className="w-3 h-3 text-slate-500 flex-shrink-0" />
+              <p className="text-xs text-[#fafaf9]/50 truncate flex items-center gap-1.5 mt-1.5">
+                <Building2 className="w-3 h-3 text-[#fafaf9]/30 flex-shrink-0" />
                 <span className="truncate">{contact.company}</span>
               </p>
             )}
           </div>
         </div>
 
-        {/* Contact Methods List */}
-        <div className="space-y-1.5 py-2 border-t border-slate-800/80 text-xs">
+        {/* Contact Methods */}
+        <div className="space-y-2 py-3 border-t border-white/[0.06] text-xs">
           {contact.email && (
             <a
               href={`mailto:${contact.email}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-2 text-slate-300 hover:text-indigo-400 truncate py-1 transition-colors"
+              className="flex items-center gap-2.5 text-[#fafaf9]/70 hover:text-[#ff4d00] truncate py-1 transition-colors group/link"
             >
-              <Mail className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              <Mail className="w-3.5 h-3.5 text-[#fafaf9]/30 group-hover/link:text-[#ff4d00] flex-shrink-0 transition-colors" />
               <span className="truncate">{contact.email}</span>
             </a>
           )}
@@ -155,9 +186,9 @@ export const ContactCard: React.FC<ContactCardProps> = ({
             <a
               href={`tel:${contact.phone}`}
               onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-2 text-slate-300 hover:text-indigo-400 truncate py-1 transition-colors"
+              className="flex items-center gap-2.5 text-[#fafaf9]/70 hover:text-[#ff4d00] truncate py-1 transition-colors group/link"
             >
-              <Phone className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+              <Phone className="w-3.5 h-3.5 text-[#fafaf9]/30 group-hover/link:text-[#ff4d00] flex-shrink-0 transition-colors" />
               <span className="truncate">{contact.phone}</span>
             </a>
           )}
@@ -165,17 +196,17 @@ export const ContactCard: React.FC<ContactCardProps> = ({
 
         {/* Tags */}
         {contact.tags && contact.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
+          <div className="flex flex-wrap gap-1.5 mt-4">
             {contact.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60"
+                className="text-[10px] px-2.5 py-1 rounded-lg bg-white/[0.04] text-[#fafaf9]/60 border border-white/[0.08] font-medium"
               >
                 #{tag}
               </span>
             ))}
             {contact.tags.length > 3 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400">
+              <span className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.04] text-[#fafaf9]/40 border border-white/[0.06]">
                 +{contact.tags.length - 3}
               </span>
             )}
@@ -183,17 +214,27 @@ export const ContactCard: React.FC<ContactCardProps> = ({
         )}
       </div>
 
-      {/* Footer: Activity timestamp */}
-      <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500 font-medium">
-        <span className="flex items-center gap-1">
-          <Clock className="w-3 h-3 text-slate-500" />
-          Last log: {formatRelativeTime(contact.lastContactedAt)}
+      {/* Footer */}
+      <div className="mt-5 pt-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-[#fafaf9]/40 font-medium">
+        <span className="flex items-center gap-1.5">
+          <Clock className="w-3 h-3 text-[#fafaf9]/20" />
+          {formatRelativeTime(contact.lastContactedAt)}
         </span>
 
-        <span className="text-indigo-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5 font-semibold">
+        {isAuthenticated && score && (
+          <span
+            id={`lead-score-${contact.id}`}
+            className={`text-[10px] px-2.5 py-1 rounded-lg border font-semibold ${getScoreBadgeClass(score.tier)}`}
+          >
+            {score.score} pts • {score.tier}
+          </span>
+        )}
+
+        <span className="text-[#ff4d00] group-hover:translate-x-1 transition-transform flex items-center gap-1 font-semibold">
           View Details
+          <ExternalLink className="w-3 h-3" />
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 };

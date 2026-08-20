@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Database, Server, CheckCircle2, RefreshCw, Layers, ShieldCheck, HelpCircle, ExternalLink, HardDrive, Cpu, Code2, Terminal } from 'lucide-react';
 import { getDatabaseStatus, DatabaseStatus, fetchRemoteContacts, saveContactsToDatabase } from '../services/vercelDatabase';
 import { Contact } from '../types';
+import { motion } from 'motion/react';
 
 interface VercelDatabaseModalProps {
   isOpen: boolean;
@@ -83,24 +84,40 @@ export const VercelDatabaseModal: React.FC<VercelDatabaseModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div
-        id="vercel-db-modal"
-        className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden text-slate-100 flex flex-col max-h-[90vh]"
+    <motion.div
+      id="vercel-db-modal-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 z-50 bg-[#0a0a0a]/90 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
+      <motion.div
+        id="vercel-db-modal-card"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl bg-[#141414] border border-white/[0.08] rounded-[2rem] shadow-2xl overflow-hidden text-[#fafaf9] flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-900/80">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-white/[0.08] bg-[#0a0a0a]/80">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+            <div className="p-2.5 bg-[#ff4d00]/10 text-[#ff4d00] rounded-xl border border-[#ff4d00]/20">
               <Database className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-xl)' }}>
+                Database Status
+              </h2>
+              <div className="flex items-center gap-2.5 mt-2">
                 <span>Vercel Postgres Database</span>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Active SQL Engine
                 </span>
-              </h2>
+              </div>
               <p className="text-xs text-slate-400">
                 Serverless PostgreSQL backend powered by @vercel/postgres & Neon
               </p>
@@ -405,7 +422,7 @@ export const VercelDatabaseModal: React.FC<VercelDatabaseModalProps> = ({
             Close
           </button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
