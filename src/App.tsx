@@ -439,7 +439,7 @@ export default function App() {
             {/* Directory Results View */}
             <section id="directory-content" className="w-full space-y-5">
               {/* Section Header with result count */}
-              <motion-div
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: pageLoaded ? 1 : 0, y: pageLoaded ? 0 : 20 }}
                 transition={{ duration: 0.6, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
@@ -459,9 +459,9 @@ export default function App() {
                 Tag: #{filters.selectedTag}
               </span>
             )}
-          </motion.div>
+            </motion.div>
 
-          {/* Auth Prompt for Unauthenticated Users */}
+          {/* Auth Prompt for Unauthenticated users */}
           {!isAuthenticated && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}

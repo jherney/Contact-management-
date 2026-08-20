@@ -76,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside id="sidebar-filters" className="lg:w-72 w-full flex-shrink-0 space-y-5">
+    <aside id="sidebar-filters" className="w-full lg:w-72 flex-shrink-0 space-y-5">
       {/* ================= MOBILE CONTROLS (Screen < lg) ================= */}
       <div className="lg:hidden space-y-3">
         {/* Horizontal Category Scroll Bar */}
